@@ -1,0 +1,160 @@
+pip install django transformers
+
+django-admin startproject tech_fest_website
+cd tech_fest_website
+python manage.py startapp chatbot
+
+# In settings.py
+INSTALLED_APPS = [
+    ...
+    'chatbot',
+    ...
+]
+
+
+# In models.py
+from django.db import models
+
+class Conversation(models.Model):
+    user_input = models.CharField(max_length=255)
+    bot_response = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+# In views.py
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['POST'])
+def chatbot_api(request):
+    user_input = request.data.get('user_input')
+    # Use BERT model from Simple Transformers library to generate chatbot response
+    bot_response = generate_chatbot_response(user_input)
+    # Store conversation history in the database
+    Conversation.objects.create(user_input=user_input, bot_response=bot_response)
+    return Response({'bot_response': bot_response})
+# In urls.py
+from django.urls import path
+from chatbot import views
+
+urlpatterns = [
+    ...
+    path('api/chatbot/', views.chatbot_api, name='chatbot_api'),
+    ...
+]
+
+<!-- In a Django template file -->
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Include necessary CSS and JavaScript files -->
+    ...
+</head>
+<body>
+    <h1>Welcome to IIT Mandi Tech Fest!</h1>
+    <!-- Implement the website's content and layout -->
+    ...
+    <div id="chatbot-container">
+        <div id="chatbot-messages"></div>
+        <input type="text" id="user-input" placeholder="Ask a question">
+        <button id="send-btn">Send</button>
+    </div>
+    <!-- Include JavaScript code for chatbot functionality -->
+    <script src="{% static 'js/chatbot.js' %}"></script>
+</body>
+</html>
+
+
+// In a JavaScript file (e.g., chatbot.js)
+const chatbotMessages = document.getElementById('chatbot-messages');
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+
+sendBtn.addEventListener('click', () => {
+    const message = userInput.value;
+    userInput.value = '';
+    appendUserMessage(message);
+    sendChatbotRequest(message);
+});
+
+function appendUserMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `You: ${message}`;
+    chatbotMessages.appendChild(messageElement);
+}
+
+function appendBotResponse(response) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `Chatbot: ${response}`;
+    chatbotMessages.appendChild(messageElement);
+}
+
+async function sendChatbotRequest(message) {
+    try {
+        const response = await fetch('/api/chatbot/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_input: message }),
+        });
+        const data = await response.json();
+        appendBotResponse(data.bot_response);
+    } catch (error) {
+        console.error('Failed to send chatbot request:', error);
+    }
+}
+
+
+# In settings.py
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'your_database_name',
+        'USER': 'your_database_user',
+        'PASSWORD': 'your_database_password',
+        'HOST': 'your_database_host',
+        'PORT': 'your_database_port',
+    }
+}
+
+# Implement indexing, caching, and query execution plan analysis based on your database management system
+# Example code for indexing:
+from django.db import connection
+with connection.cursor() as cursor:
+    cursor.execute('CREATE INDEX conversation_user_input_idx ON conversation (user_input);')
+
+# Implement these techniques based on your application architecture and requirements
+# Example code for threading:
+import threading
+
+def handle_chatbot_request(message):
+    # Process the chatbot request
+    response = generate_chatbot_response(message)
+    # Store conversation history in the database
+    Conversation.objects.create(user_input=message, bot_response=response)
+
+# Handle chatbot requests asynchronously using threading
+def handle_chatbot_async(request):
+    message = request.data.get('user_input')
+    thread = threading.Thread(target=handle_chatbot_request, args=(message,))
+    thread.start()
+    return Response({'message': 'Chatbot request received.'})
+
+# Implement these techniques based on your application architecture and requirements
+# Example code for threading:
+import threading
+
+def handle_chatbot_request(message):
+    # Process the chatbot request
+    response = generate_chatbot_response(message)
+    # Store conversation history in the database
+    Conversation.objects.create(user_input=message, bot_response=response)
+
+# Handle chatbot requests asynchronously using threading
+def handle_chatbot_async(request):
+    message = request.data.get('user_input')
+    thread = threading.Thread(target=handle_chatbot_request, args=(message,))
+    thread.start()
+    return Response({'message': 'Chatbot request received.'})
+
+
